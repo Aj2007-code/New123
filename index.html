@@ -393,7 +393,7 @@
         <div class="field">
           <label for="email">Email address</label>
           <input id="email" placeholder="your.email@iitp.ac.in" autocomplete="off" />
-          <div class="hint">Your one-time password will be sent here.</div>
+          <div class="hint">Auto-filled from your roll number — edit it if this isn't your address. OTP goes here.</div>
         </div>
 
         <button class="btn" id="btn-send-otp" disabled>Send OTP</button>
@@ -587,6 +587,12 @@
     ).slice(0, 8);
   }
 
+  // Institute email pattern: firstname_rollno@iitp.ac.in (first name lowercase, roll no lowercase)
+  function buildDefaultEmail(student){
+    const firstName = student.n.trim().split(/\s+/)[0].toLowerCase().replace(/[^a-z]/g, '');
+    return `${firstName}_${student.r.toLowerCase()}@iitp.ac.in`;
+  }
+
   function setMatchedVoter(student){
     state.rollNo = student.r;
     state.name = student.n;
@@ -594,6 +600,12 @@
     suggestionsEl.classList.remove('show');
     matchInfoEl.textContent = `✓ Matched voter: ${student.n} · ${student.r}`;
     matchInfoEl.className = 'match-info ok';
+
+    // Auto-fill the institute email, but never clobber something the voter already typed themselves
+    if (!emailEl.value.trim() || emailEl.dataset.autofilled === 'true') {
+      emailEl.value = buildDefaultEmail(student);
+      emailEl.dataset.autofilled = 'true';
+    }
     updateSendOtpState();
   }
 
@@ -648,7 +660,10 @@
   });
 
   phoneEl.addEventListener('input', updateSendOtpState);
-  emailEl.addEventListener('input', updateSendOtpState);
+  emailEl.addEventListener('input', () => {
+    emailEl.dataset.autofilled = 'false';
+    updateSendOtpState();
+  });
 
   btnSendOtp.addEventListener('click', async () => {
     const phone = phoneEl.value.trim();
