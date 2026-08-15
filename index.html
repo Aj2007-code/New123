@@ -447,6 +447,7 @@
           <h2>Votes recorded</h2>
           <p>Your ballot has been sealed and cannot be changed.</p>
           <div class="receipt" id="receipt"></div>
+          <button class="btn btn-link" id="btn-vote-again" style="margin-top:14px;">↻ Vote again (testing only — remove before go-live)</button>
         </div>
       </div>
 
@@ -798,6 +799,15 @@
       showMsg('Could not reach the server. Please try again.', 'error');
       setLoading(btnSubmitVote, false, 'Seal & submit votes');
     }
+  });  document.getElementById('btn-vote-again').addEventListener('click', () => {
+    state.rollNo = ''; state.name = '';
+    state.boysCandidateId = null; state.boysCandidateName = '';
+    state.girlsCandidateId = null; state.girlsCandidateName = '';
+    otpInputs.forEach(i => i.value = '');
+    voterQuery.value = '';
+    matchInfoEl.className = 'match-info';
+    updateSendOtpState();
+    goToPanel('login');
   });
 </script>
 </body>
