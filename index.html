@@ -82,7 +82,6 @@
     overflow:hidden;
   }
   .ballot::before{
-    /* serrated stub edge */
     content:'';
     position:absolute; left:0; top:0; bottom:0; width:26px;
     background-image: radial-gradient(circle at 0 8px, transparent 5px, var(--paper) 5.5px);
@@ -136,7 +135,7 @@
     margin:0 0 22px;
   }
 
-  .field{ margin-bottom:16px; }
+  .field{ margin-bottom:16px; position:relative; }
   .field label{
     display:block;
     font-size:12px;
@@ -162,6 +161,41 @@
   }
   .field input::placeholder{ color:#BEC1CE; font-family:'Inter',sans-serif; }
   .field .hint{ font-size:11.5px; color:var(--ink-faint); margin-top:5px; }
+  .field .match-info{ font-size:12px; margin-top:6px; font-weight:600; display:none; }
+  .field .match-info.ok{ display:block; color:var(--success); }
+  .field .match-info.bad{ display:block; color:var(--error); }
+
+  .suggestions{
+    position:absolute;
+    left:0; right:0; top:calc(100% + 2px);
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:0 8px 20px -8px rgba(28,37,65,0.25);
+    max-height:220px;
+    overflow-y:auto;
+    z-index:20;
+    display:none;
+  }
+  .suggestions.show{ display:block; }
+  .suggestions .sug-item{
+    padding:10px 14px;
+    cursor:pointer;
+    font-size:13.5px;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    border-bottom:1px solid var(--line);
+  }
+  .suggestions .sug-item:last-child{ border-bottom:none; }
+  .suggestions .sug-item:hover, .suggestions .sug-item.active{ background:#FBF1F0; }
+  .suggestions .sug-item .sug-name{ font-weight:600; }
+  .suggestions .sug-item .sug-roll{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--ink-faint);
+    font-size:12px;
+  }
+  .suggestions .sug-empty{ padding:10px 14px; font-size:13px; color:var(--ink-faint); }
 
   .btn{
     width:100%;
@@ -215,7 +249,25 @@
   .msg.success{ background:#E4EDE1; color:var(--success); }
 
   /* Candidate list */
-  .candidates{ display:flex; flex-direction:column; gap:10px; margin-bottom:22px; }
+  .cr-section{ margin-bottom:24px; }
+  .cr-section-title{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--seal);
+    margin:0 0 10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .cr-section-title::after{
+    content:'';
+    flex:1;
+    height:1px;
+    background:var(--line);
+  }
+  .candidates{ display:flex; flex-direction:column; gap:10px; }
   .candidate{
     display:flex; align-items:center; gap:14px;
     padding:12px;
@@ -291,6 +343,7 @@
     font-size:11.5px;
     color:var(--ink-faint);
     text-align:left;
+    white-space:pre-wrap;
   }
 
   .footer-note{
@@ -307,7 +360,7 @@
   <div class="letterhead">
     <p class="eyebrow">Batch of 2026 · Class Representative</p>
     <h1>Official Ballot</h1>
-    <p class="sub">Verify your roll number to cast a single, confidential vote.</p>
+    <p class="sub">Verify your identity to cast one vote for Boys' CR and one for Girls' CR.</p>
   </div>
 
   <div class="ballot">
@@ -328,8 +381,10 @@
         <h2 class="step-title">Voter details</h2>
 
         <div class="field">
-          <label for="rollNo">Roll number</label>
-          <input id="rollNo" placeholder="e.g. 2501CB23" autocomplete="off" />
+          <label for="voterQuery">Name or roll number</label>
+          <input id="voterQuery" placeholder="Start typing your name or roll no." autocomplete="off" />
+          <div id="suggestions" class="suggestions"></div>
+          <div id="matchInfo" class="match-info"></div>
         </div>
         <div class="field">
           <label for="phone">Phone number</label>
@@ -341,7 +396,7 @@
           <div class="hint">Your one-time password will be sent here.</div>
         </div>
 
-        <button class="btn" id="btn-send-otp">Send OTP</button>
+        <button class="btn" id="btn-send-otp" disabled>Send OTP</button>
       </div>
 
       <!-- Step 2: OTP -->
@@ -367,12 +422,20 @@
 
       <!-- Step 3: Vote -->
       <div class="panel" id="panel-vote">
-        <p class="step-caption">Step III — Cast Your Vote</p>
-        <h2 class="step-title">Select one candidate</h2>
+        <p class="step-caption">Step III — Cast Your Votes</p>
+        <h2 class="step-title">Select one candidate in each section</h2>
 
-        <div class="candidates" id="candidate-list"></div>
+        <div class="cr-section">
+          <p class="cr-section-title">Boys' CR</p>
+          <div class="candidates" id="candidate-list-boys"></div>
+        </div>
 
-        <button class="btn btn-seal" id="btn-submit-vote" disabled>Seal &amp; submit vote</button>
+        <div class="cr-section">
+          <p class="cr-section-title">Girls' CR</p>
+          <div class="candidates" id="candidate-list-girls"></div>
+        </div>
+
+        <button class="btn btn-seal" id="btn-submit-vote" disabled>Seal &amp; submit votes</button>
       </div>
 
       <!-- Confirmation -->
@@ -381,7 +444,7 @@
           <div class="seal-stamp">
             <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <h2>Vote recorded</h2>
+          <h2>Votes recorded</h2>
           <p>Your ballot has been sealed and cannot be changed.</p>
           <div class="receipt" id="receipt"></div>
         </div>
@@ -390,14 +453,88 @@
     </div>
   </div>
 
-  <p class="footer-note">One vote per roll number. Results are compiled by the election committee.</p>
+  <p class="footer-note">One vote per roll number, per section. Results are compiled by the election committee.</p>
 </div>
 
 <script>
   // ⚠️ Replace with your deployed Apps Script Web App URL (ends in /exec)
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw3S-R8Cv3WwItH1bV5RBmEjQlGY6QXLQVoxQkXqQvTFSjBVi9UcrjgLvghexesZMyggA/exec';
 
-  const state = { rollNo: '', phone: '', email: '', candidateId: null };
+  // ---- Master voter roster (name + roll no.) — only these can log in ----
+  // r = roll number, n = full name
+  const STUDENTS = [
+    {r:"2601CB01", n:"Shorya Sharma"},
+    {r:"2601CB02", n:"Aditi Kumari"},
+    {r:"2601CB03", n:"Animesh Kumar Jha"},
+    {r:"2601CB04", n:"Rathod Ritesh"},
+    {r:"2601CB05", n:"Siriki Hemanth"},
+    {r:"2601CB06", n:"Anshul Tyagi"},
+    {r:"2601CB07", n:"Kota Manideep"},
+    {r:"2601CB08", n:"Adarsh Mohanty"},
+    {r:"2601CB09", n:"Manash Kachari"},
+    {r:"2601CB10", n:"Krishna Sardar"},
+    {r:"2601CB11", n:"Jeetesh Kumar Sahu"},
+    {r:"2601CB12", n:"Utkarsh Yadav"},
+    {r:"2601CB13", n:"Ishan Saraswat"},
+    {r:"2601CB14", n:"Tej Pratap"},
+    {r:"2601CB15", n:"Dipesh Prajapat"},
+    {r:"2601CB16", n:"Shreyas Gaurav Tarway"},
+    {r:"2601CB17", n:"Shourya Pandey"},
+    {r:"2601CB19", n:"Abhinaba Ghosh"},
+    {r:"2601CB20", n:"Agniva Biswas"},
+    {r:"2601CB21", n:"Jharana Lathigara"},
+    {r:"2601CB22", n:"Adway Vijay Shinde"},
+    {r:"2601CB23", n:"Ujwal Kumar Jha"},
+    {r:"2601CB24", n:"Ayush Gupta"},
+    {r:"2601CB25", n:"Tanushka Sharma"},
+    {r:"2601CB26", n:"Swarit Srivastava"},
+    {r:"2601CB27", n:"Sameer Kardam"},
+    {r:"2601CB28", n:"Yadlapalli Sahiti"},
+    {r:"2601CB29", n:"Gaurav Agnihotri"},
+    {r:"2601CB30", n:"Mohammad Ibrahim"},
+    {r:"2601CB31", n:"Samarth Pratap Singh"},
+    {r:"2601CB32", n:"Satyam Kumar Kashyap"},
+    {r:"2601CB33", n:"Ranveer Raj"},
+    {r:"2601CB34", n:"Yogeshwar Singh"},
+    {r:"2601CB35", n:"Abhay Yadav"},
+    {r:"2601CB36", n:"Nikhil Sonkar"},
+    {r:"2601CB37", n:"Omraj Kumar"},
+    {r:"2601CB38", n:"Khushi Kishor Paulbudhe"},
+    {r:"2601CB39", n:"Satyam Kumar"},
+    {r:"2601CB40", n:"Tanay Sanghvi"},
+    {r:"2601CB41", n:"Wathore Harsh Datta"},
+    {r:"2601CB42", n:"Abhinav Singh"},
+    {r:"2601CB44", n:"Soham Ghosh"},
+    {r:"2601CB45", n:"Aditya Gupta"},
+    {r:"2601CB46", n:"Shobhit Airan"},
+    {r:"2601CB47", n:"Nasir Raza"},
+    {r:"2601CB48", n:"Jitin Kumar"},
+    {r:"2601CB49", n:"Shubhi Jain"},
+    {r:"2601CB50", n:"Pushpraj Nigwal"},
+    {r:"2601CB51", n:"Akula Anjana Sowmya"},
+    {r:"2601CB52", n:"Shagun Singh"},
+    {r:"2601CB53", n:"Nikhil"},
+    {r:"2601CB54", n:"Pintu Mondal"},
+    {r:"2601CB55", n:"Varahi Rohit Pardeshi"},
+    {r:"2601CB56", n:"Mudavath Divya"},
+    {r:"2601CB57", n:"Sharad Rajesh Namdeo"},
+    {r:"2601CB58", n:"Umesh Soni"},
+    {r:"2601CB59", n:"Illa Ramya"},
+    {r:"2601CB60", n:"Lohit S"},
+    {r:"2601CB61", n:"Ankit Kumar Subai"},
+    {r:"2601CB62", n:"Sampathi Mayank"},
+    {r:"2601CB63", n:"Gyanvi Priya"},
+    {r:"2601CB64", n:"Peddaram Sahasra Vardhini"},
+    {r:"2601CB65", n:"Gangapatnam Shyam Abhishek"},
+    {r:"2601CB66", n:"Guguloth Shekar"},
+    {r:"2601CB67", n:"Kevlani Yash Manishbhai"},
+    {r:"2603CB01", n:"Pratheeksha B G"},
+    {r:"2603CB02", n:"Sriejan Das"},
+    {r:"2603CB03", n:"Bishu Bhaskar"},
+    {r:"2603CB04", n:"Sachin Kumar"}
+  ];
+
+  const state = { rollNo: '', name: '', phone: '', email: '', boysCandidateId: null, boysCandidateName: '', girlsCandidateId: null, girlsCandidateName: '' };
 
   const msgEl = document.getElementById('msg');
   function showMsg(text, type){
@@ -429,24 +566,103 @@
     btn.textContent = loading ? 'Please wait…' : label;
   }
 
-  /* ---- Step 1: request OTP ---- */
+  /* ---- Step 1: name/roll autodetect against the roster ---- */
+  const voterQuery = document.getElementById('voterQuery');
+  const suggestionsEl = document.getElementById('suggestions');
+  const matchInfoEl = document.getElementById('matchInfo');
   const btnSendOtp = document.getElementById('btn-send-otp');
-  btnSendOtp.addEventListener('click', async () => {
-    const rollNo = document.getElementById('rollNo').value.trim().toUpperCase();
-    const phone = document.getElementById('phone').value.trim();
-    const email = document.getElementById('email').value.trim();
+  const phoneEl = document.getElementById('phone');
+  const emailEl = document.getElementById('email');
 
-    if (!rollNo || !phone || !email) {
-      showMsg('Please fill in all fields.', 'error');
+  function normRoll(s){ return s.trim().toUpperCase().replace(/\s+/g,''); }
+  function normName(s){ return s.trim().toLowerCase().replace(/\s+/g,' '); }
+
+  function findMatches(q){
+    const qRoll = normRoll(q);
+    const qName = normName(q);
+    if (!qRoll && !qName) return [];
+    return STUDENTS.filter(s =>
+      s.r.toUpperCase().includes(qRoll) ||
+      normName(s.n).includes(qName)
+    ).slice(0, 8);
+  }
+
+  function setMatchedVoter(student){
+    state.rollNo = student.r;
+    state.name = student.n;
+    voterQuery.value = `${student.n} (${student.r})`;
+    suggestionsEl.classList.remove('show');
+    matchInfoEl.textContent = `✓ Matched voter: ${student.n} · ${student.r}`;
+    matchInfoEl.className = 'match-info ok';
+    updateSendOtpState();
+  }
+
+  function clearMatchedVoter(){
+    state.rollNo = '';
+    state.name = '';
+    updateSendOtpState();
+  }
+
+  function updateSendOtpState(){
+    const ready = !!state.rollNo && phoneEl.value.trim().length >= 10 && emailEl.value.trim().includes('@');
+    btnSendOtp.disabled = !ready;
+  }
+
+  voterQuery.addEventListener('input', () => {
+    clearMatchedVoter();
+    const q = voterQuery.value;
+    if (!q.trim()) {
+      suggestionsEl.classList.remove('show');
+      matchInfoEl.className = 'match-info';
       return;
     }
+    const matches = findMatches(q);
+
+    // Auto-lock if the typed text is an exact roll or exact name match
+    const exact = STUDENTS.find(s => s.r.toUpperCase() === normRoll(q) || normName(s.n) === normName(q));
+    if (exact) { setMatchedVoter(exact); return; }
+
+    if (matches.length === 0) {
+      suggestionsEl.innerHTML = '<div class="sug-empty">Not found on the voter list. Check spelling or roll number.</div>';
+      suggestionsEl.classList.add('show');
+      matchInfoEl.textContent = 'Not on the voter list — only registered students can vote.';
+      matchInfoEl.className = 'match-info bad';
+      return;
+    }
+    matchInfoEl.className = 'match-info';
+    suggestionsEl.innerHTML = matches.map(s =>
+      `<div class="sug-item" data-roll="${s.r}"><span class="sug-name">${s.n}</span><span class="sug-roll">${s.r}</span></div>`
+    ).join('');
+    suggestionsEl.classList.add('show');
+  });
+
+  suggestionsEl.addEventListener('click', (e) => {
+    const item = e.target.closest('.sug-item');
+    if (!item || !item.dataset.roll) return;
+    const student = STUDENTS.find(s => s.r === item.dataset.roll);
+    if (student) setMatchedVoter(student);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.field')) suggestionsEl.classList.remove('show');
+  });
+
+  phoneEl.addEventListener('input', updateSendOtpState);
+  emailEl.addEventListener('input', updateSendOtpState);
+
+  btnSendOtp.addEventListener('click', async () => {
+    const phone = phoneEl.value.trim();
+    const email = emailEl.value.trim();
+
+    if (!state.rollNo) { showMsg('Please select your name from the voter list.', 'error'); return; }
+    if (!phone || !email) { showMsg('Please fill in all fields.', 'error'); return; }
 
     setLoading(btnSendOtp, true, 'Send OTP');
     try {
-      const result = await callApi({ action: 'requestOtp', rollNo, phone, email });
+      const result = await callApi({ action: 'requestOtp', rollNo: state.rollNo, name: state.name, phone, email });
       if (!result.ok) { showMsg(result.error || 'Something went wrong.', 'error'); return; }
 
-      state.rollNo = rollNo; state.phone = phone; state.email = email;
+      state.phone = phone; state.email = email;
       document.getElementById('otp-target-email').textContent = email;
       goToPanel('otp');
       document.querySelector('#panel-otp input').focus();
@@ -454,6 +670,7 @@
       showMsg('Could not reach the server. Please try again.', 'error');
     } finally {
       setLoading(btnSendOtp, false, 'Send OTP');
+      updateSendOtpState();
     }
   });
 
@@ -491,57 +708,79 @@
   document.getElementById('btn-resend-otp').addEventListener('click', async () => {
     clearMsg();
     try {
-      const result = await callApi({ action: 'requestOtp', rollNo: state.rollNo, phone: state.phone, email: state.email });
+      const result = await callApi({ action: 'requestOtp', rollNo: state.rollNo, name: state.name, phone: state.phone, email: state.email });
       showMsg(result.ok ? 'A new code has been sent.' : (result.error || 'Could not resend.'), result.ok ? 'success' : 'error');
     } catch (err) {
       showMsg('Could not reach the server.', 'error');
     }
   });
 
-  /* ---- Step 3: candidate selection + vote ---- */
-  async function loadCandidates(){
-    const list = document.getElementById('candidate-list');
-    list.innerHTML = '<p style="font-size:13px;color:var(--ink-faint);">Loading candidates…</p>';
-    try {
-      const result = await callApi({ action: 'getCandidates' });
-      const candidates = result.ok ? result.candidates : [];
-      list.innerHTML = '';
-      candidates.forEach(c => {
-        const el = document.createElement('div');
-        el.className = 'candidate';
-        el.dataset.id = c.id;
-        el.innerHTML = `
-          <div class="photo">${c.photoUrl ? `<img src="${c.photoUrl}" alt="${c.name}">` : c.name.charAt(0)}</div>
-          <div class="name">${c.name}</div>
-          <div class="mark"></div>
-        `;
-        el.addEventListener('click', () => {
-          document.querySelectorAll('.candidate').forEach(x => x.classList.remove('selected'));
-          el.classList.add('selected');
-          state.candidateId = c.id;
-          document.getElementById('btn-submit-vote').disabled = false;
-        });
-        list.appendChild(el);
+  /* ---- Step 3: candidate selection (Boys' CR + Girls' CR) + vote ---- */
+  function renderCandidateGroup(containerId, candidates, key, nameKey){
+    const list = document.getElementById(containerId);
+    if (!candidates || candidates.length === 0) {
+      list.innerHTML = '<p style="font-size:13px;color:var(--ink-faint);">No candidates found.</p>';
+      return;
+    }
+    list.innerHTML = '';
+    candidates.forEach(c => {
+      const el = document.createElement('div');
+      el.className = 'candidate';
+      el.dataset.id = c.id;
+      el.innerHTML = `
+        <div class="photo">${c.photoUrl ? `<img src="${c.photoUrl}" alt="${c.name}">` : c.name.charAt(0)}</div>
+        <div class="name">${c.name}</div>
+        <div class="mark"></div>
+      `;
+      el.addEventListener('click', () => {
+        list.querySelectorAll('.candidate').forEach(x => x.classList.remove('selected'));
+        el.classList.add('selected');
+        state[key] = c.id;
+        state[nameKey] = c.name;
+        updateSubmitState();
       });
+      list.appendChild(el);
+    });
+  }
+
+  function updateSubmitState(){
+    document.getElementById('btn-submit-vote').disabled = !(state.boysCandidateId && state.girlsCandidateId);
+  }
+
+  async function loadCandidates(){
+    const boysList = document.getElementById('candidate-list-boys');
+    const girlsList = document.getElementById('candidate-list-girls');
+    boysList.innerHTML = girlsList.innerHTML = '<p style="font-size:13px;color:var(--ink-faint);">Loading candidates…</p>';
+    try {
+      // Expected backend response: { ok:true, boys:[{id,name,photoUrl}], girls:[{id,name,photoUrl}] }
+      const result = await callApi({ action: 'getCandidates' });
+      if (!result.ok) throw new Error(result.error || 'Failed to load candidates');
+      renderCandidateGroup('candidate-list-boys', result.boys || [], 'boysCandidateId', 'boysCandidateName');
+      renderCandidateGroup('candidate-list-girls', result.girls || [], 'girlsCandidateId', 'girlsCandidateName');
     } catch (err) {
-      list.innerHTML = '<p style="font-size:13px;color:var(--error);">Could not load candidates.</p>';
+      boysList.innerHTML = girlsList.innerHTML = '<p style="font-size:13px;color:var(--error);">Could not load candidates.</p>';
     }
   }
 
   const btnSubmitVote = document.getElementById('btn-submit-vote');
   btnSubmitVote.addEventListener('click', async () => {
-    if (!state.candidateId) return;
-    setLoading(btnSubmitVote, true, 'Seal & submit vote');
+    if (!state.boysCandidateId || !state.girlsCandidateId) return;
+    setLoading(btnSubmitVote, true, 'Seal & submit votes');
     try {
-      const result = await callApi({ action: 'submitVote', rollNo: state.rollNo, candidateId: state.candidateId });
-      if (!result.ok) { showMsg(result.error || 'Could not submit your vote.', 'error'); setLoading(btnSubmitVote, false, 'Seal & submit vote'); return; }
+      const result = await callApi({
+        action: 'submitVote',
+        rollNo: state.rollNo,
+        boysCandidateId: state.boysCandidateId,
+        girlsCandidateId: state.girlsCandidateId
+      });
+      if (!result.ok) { showMsg(result.error || 'Could not submit your vote.', 'error'); setLoading(btnSubmitVote, false, 'Seal & submit votes'); return; }
 
       document.getElementById('receipt').textContent =
-        `Roll No: ${state.rollNo}\nStatus: Recorded\nTimestamp: ${new Date().toLocaleString()}`;
+        `Roll No: ${state.rollNo}\nBoys' CR vote: ${state.boysCandidateName}\nGirls' CR vote: ${state.girlsCandidateName}\nStatus: Recorded\nTimestamp: ${new Date().toLocaleString()}`;
       goToPanel('done');
     } catch (err) {
       showMsg('Could not reach the server. Please try again.', 'error');
-      setLoading(btnSubmitVote, false, 'Seal & submit vote');
+      setLoading(btnSubmitVote, false, 'Seal & submit votes');
     }
   });
 </script>
