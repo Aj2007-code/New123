@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CR Election 2026 — Official Ballot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #F6F2E8;
+    --paper-card: #FBF9F3;
+    --ink: #1C2541;
+    --ink-soft: #4A537A;
+    --ink-faint: #8A8F9F;
+    --seal: #7A1F3D;
+    --seal-bright: #9C2C4F;
+    --line: #D9D2BE;
+    --success: #2F5233;
+    --error: #8A2E1F;
+    --radius: 4px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at top, #FBF9F3 0%, var(--paper) 60%);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 16px;
+  }
+  body::before{
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(28,37,65,0.02) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(28,37,65,0.02) 40px);
+    pointer-events:none;
+  }
+
+  .booth{
+    width:100%;
+    max-width:520px;
+    position:relative;
+  }
+
+  .letterhead{
+    text-align:center;
+    margin-bottom:22px;
+  }
+  .letterhead .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.22em;
+    color:var(--seal);
+    text-transform:uppercase;
+    margin:0 0 8px;
+  }
+  .letterhead h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(28px,6vw,38px);
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .letterhead .sub{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin:0;
+  }
+
+  .ballot{
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:0 1px 2px rgba(28,37,65,0.04), 0 12px 28px -14px rgba(28,37,65,0.18);
+    position:relative;
+    overflow:hidden;
+  }
+  .ballot::before{
+    /* serrated stub edge */
+    content:'';
+    position:absolute; left:0; top:0; bottom:0; width:26px;
+    background-image: radial-gradient(circle at 0 8px, transparent 5px, var(--paper) 5.5px);
+    background-size: 26px 16px;
+    background-repeat: repeat-y;
+    border-right:1px dashed var(--line);
+  }
+
+  .stub{
+    position:absolute; left:0; top:0; bottom:0; width:26px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .stub span{
+    writing-mode:vertical-rl;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9px;
+    letter-spacing:0.2em;
+    color:var(--ink-faint);
+  }
+
+  .ballot-inner{
+    padding:34px 30px 30px 46px;
+  }
+
+  .steps{
+    display:flex;
+    gap:6px;
+    margin-bottom:26px;
+  }
+  .step-dot{
+    flex:1;
+    height:3px;
+    background:var(--line);
+    border-radius:2px;
+    position:relative;
+    overflow:hidden;
+  }
+  .step-dot.done, .step-dot.active{ background:var(--seal); }
+  .step-caption{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    margin:0 0 4px;
+  }
+  .step-title{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:21px;
+    margin:0 0 22px;
+  }
+
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .field input{
+    width:100%;
+    padding:12px 14px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:#fff;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:15px;
+    color:var(--ink);
+    letter-spacing:0.02em;
+    transition:border-color .15s;
+  }
+  .field input:focus{
+    outline:none;
+    border-color:var(--seal);
+  }
+  .field input::placeholder{ color:#BEC1CE; font-family:'Inter',sans-serif; }
+  .field .hint{ font-size:11.5px; color:var(--ink-faint); margin-top:5px; }
+
+  .btn{
+    width:100%;
+    padding:13px 18px;
+    border:none;
+    border-radius:var(--radius);
+    background:var(--ink);
+    color:#fff;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14.5px;
+    letter-spacing:0.01em;
+    cursor:pointer;
+    transition:background .15s, transform .1s;
+  }
+  .btn:hover{ background:var(--ink-soft); }
+  .btn:active{ transform:scale(0.99); }
+  .btn:disabled{ background:#C7CAD4; cursor:not-allowed; }
+  .btn-seal{ background:var(--seal); }
+  .btn-seal:hover{ background:var(--seal-bright); }
+  .btn-link{
+    background:none; color:var(--ink-soft); font-weight:500;
+    padding:8px; font-size:13px; text-decoration:underline;
+    text-underline-offset:2px;
+  }
+  .btn-link:hover{ background:none; color:var(--ink); }
+
+  .otp-row{
+    display:flex; gap:8px; justify-content:center; margin-bottom:8px;
+  }
+  .otp-row input{
+    width:42px; height:52px;
+    text-align:center;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:22px; font-weight:600;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:#fff;
+  }
+  .otp-row input:focus{ outline:none; border-color:var(--seal); }
+
+  .msg{
+    font-size:13px;
+    padding:10px 12px;
+    border-radius:var(--radius);
+    margin-bottom:16px;
+    display:none;
+  }
+  .msg.show{ display:block; }
+  .msg.error{ background:#F7E6E1; color:var(--error); }
+  .msg.success{ background:#E4EDE1; color:var(--success); }
+
+  /* Candidate list */
+  .candidates{ display:flex; flex-direction:column; gap:10px; margin-bottom:22px; }
+  .candidate{
+    display:flex; align-items:center; gap:14px;
+    padding:12px;
+    border:1.5px solid var(--line);
+    border-radius:var(--radius);
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+    position:relative;
+  }
+  .candidate:hover{ border-color:var(--ink-soft); }
+  .candidate.selected{ border-color:var(--seal); background:#FBF1F0; }
+  .candidate .photo{
+    width:52px; height:52px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#E4DFCF,#D2CBB4);
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',serif; font-weight:600; font-size:18px;
+    color:var(--ink-soft);
+    overflow:hidden;
+  }
+  .candidate .photo img{ width:100%; height:100%; object-fit:cover; }
+  .candidate .name{ font-weight:600; font-size:15px; flex:1; }
+  .candidate .mark{
+    width:22px; height:22px;
+    border:1.5px solid var(--line);
+    border-radius:50%;
+    flex-shrink:0;
+    position:relative;
+  }
+  .candidate.selected .mark{ border-color:var(--seal); }
+  .candidate.selected .mark::after{
+    content:'';
+    position:absolute; inset:4px;
+    background:var(--seal);
+    border-radius:50%;
+  }
+
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  /* Wax seal success state */
+  .sealed{
+    text-align:center;
+    padding:20px 0 6px;
+  }
+  .seal-stamp{
+    width:92px; height:92px;
+    margin:0 auto 20px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, var(--seal-bright), var(--seal) 70%);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 6px 16px -4px rgba(122,31,61,0.5);
+    transform: scale(0);
+    animation: stampDown 0.5s cubic-bezier(.2,1.4,.4,1) forwards;
+  }
+  .seal-stamp svg{ width:38px; height:38px; }
+  @keyframes stampDown{
+    0%{ transform:scale(2.2) rotate(-8deg); opacity:0; }
+    60%{ transform:scale(0.9) rotate(2deg); opacity:1; }
+    100%{ transform:scale(1) rotate(0deg); opacity:1; }
+  }
+  .sealed h2{
+    font-family:'Fraunces',serif; font-size:22px; margin:0 0 8px;
+  }
+  .sealed p{ color:var(--ink-soft); font-size:13.5px; margin:0 0 4px; }
+  .receipt{
+    margin-top:18px;
+    padding:12px 14px;
+    border:1px dashed var(--line);
+    border-radius:var(--radius);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:var(--ink-faint);
+    text-align:left;
+  }
+
+  .footer-note{
+    text-align:center;
+    font-size:11px;
+    color:var(--ink-faint);
+    margin-top:18px;
+  }
+</style>
+</head>
+<body>
+
+<div class="booth">
+  <div class="letterhead">
+    <p class="eyebrow">Batch of 2026 · Class Representative</p>
+    <h1>Official Ballot</h1>
+    <p class="sub">Verify your roll number to cast a single, confidential vote.</p>
+  </div>
+
+  <div class="ballot">
+    <div class="stub"><span>CR-2026</span></div>
+    <div class="ballot-inner">
+
+      <div class="steps">
+        <div class="step-dot" id="dot-1"></div>
+        <div class="step-dot" id="dot-2"></div>
+        <div class="step-dot" id="dot-3"></div>
+      </div>
+
+      <div id="msg" class="msg"></div>
+
+      <!-- Step 1: Login -->
+      <div class="panel active" id="panel-login">
+        <p class="step-caption">Step I — Identify Yourself</p>
+        <h2 class="step-title">Voter details</h2>
+
+        <div class="field">
+          <label for="rollNo">Roll number</label>
+          <input id="rollNo" placeholder="e.g. 2501CB23" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="phone">Phone number</label>
+          <input id="phone" placeholder="10-digit mobile number" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="email">Email address</label>
+          <input id="email" placeholder="your.email@iitp.ac.in" autocomplete="off" />
+          <div class="hint">Your one-time password will be sent here.</div>
+        </div>
+
+        <button class="btn" id="btn-send-otp">Send OTP</button>
+      </div>
+
+      <!-- Step 2: OTP -->
+      <div class="panel" id="panel-otp">
+        <p class="step-caption">Step II — Verify</p>
+        <h2 class="step-title">Enter the 6-digit code</h2>
+        <p style="font-size:13px;color:var(--ink-soft);margin:-14px 0 18px;">
+          Sent to <strong id="otp-target-email">—</strong>
+        </p>
+
+        <div class="otp-row">
+          <input maxlength="1" inputmode="numeric" />
+          <input maxlength="1" inputmode="numeric" />
+          <input maxlength="1" inputmode="numeric" />
+          <input maxlength="1" inputmode="numeric" />
+          <input maxlength="1" inputmode="numeric" />
+          <input maxlength="1" inputmode="numeric" />
+        </div>
+
+        <button class="btn" id="btn-verify-otp" style="margin-top:14px;">Verify &amp; continue</button>
+        <button class="btn btn-link" id="btn-resend-otp">Resend code</button>
+      </div>
+
+      <!-- Step 3: Vote -->
+      <div class="panel" id="panel-vote">
+        <p class="step-caption">Step III — Cast Your Vote</p>
+        <h2 class="step-title">Select one candidate</h2>
+
+        <div class="candidates" id="candidate-list"></div>
+
+        <button class="btn btn-seal" id="btn-submit-vote" disabled>Seal &amp; submit vote</button>
+      </div>
+
+      <!-- Confirmation -->
+      <div class="panel" id="panel-done">
+        <div class="sealed">
+          <div class="seal-stamp">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h2>Vote recorded</h2>
+          <p>Your ballot has been sealed and cannot be changed.</p>
+          <div class="receipt" id="receipt"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="footer-note">One vote per roll number. Results are compiled by the election committee.</p>
+</div>
+
+<script>
+  // ⚠️ Replace with your deployed Apps Script Web App URL (ends in /exec)
+  const APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+
+  const state = { rollNo: '', phone: '', email: '', candidateId: null };
+
+  const msgEl = document.getElementById('msg');
+  function showMsg(text, type){
+    msgEl.textContent = text;
+    msgEl.className = 'msg show ' + type;
+  }
+  function clearMsg(){ msgEl.className = 'msg'; }
+
+  function goToPanel(name){
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    document.getElementById('dot-1').className = 'step-dot ' + (name==='login' ? 'active' : 'done');
+    document.getElementById('dot-2').className = 'step-dot ' + (name==='otp' ? 'active' : (name==='vote'||name==='done' ? 'done' : ''));
+    document.getElementById('dot-3').className = 'step-dot ' + (name==='vote' ? 'active' : (name==='done' ? 'done' : ''));
+    clearMsg();
+  }
+
+  async function callApi(payload){
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight against Apps Script
+      body: JSON.stringify(payload),
+    });
+    return res.json();
+  }
+
+  function setLoading(btn, loading, label){
+    btn.disabled = loading;
+    btn.textContent = loading ? 'Please wait…' : label;
+  }
+
+  /* ---- Step 1: request OTP ---- */
+  const btnSendOtp = document.getElementById('btn-send-otp');
+  btnSendOtp.addEventListener('click', async () => {
+    const rollNo = document.getElementById('rollNo').value.trim().toUpperCase();
+    const phone = document.getElementById('phone').value.trim();
+    const email = document.getElementById('email').value.trim();
+
+    if (!rollNo || !phone || !email) {
+      showMsg('Please fill in all fields.', 'error');
+      return;
+    }
+
+    setLoading(btnSendOtp, true, 'Send OTP');
+    try {
+      const result = await callApi({ action: 'requestOtp', rollNo, phone, email });
+      if (!result.ok) { showMsg(result.error || 'Something went wrong.', 'error'); return; }
+
+      state.rollNo = rollNo; state.phone = phone; state.email = email;
+      document.getElementById('otp-target-email').textContent = email;
+      goToPanel('otp');
+      document.querySelector('#panel-otp input').focus();
+    } catch (err) {
+      showMsg('Could not reach the server. Please try again.', 'error');
+    } finally {
+      setLoading(btnSendOtp, false, 'Send OTP');
+    }
+  });
+
+  /* ---- Step 2: OTP entry ---- */
+  const otpInputs = Array.from(document.querySelectorAll('#panel-otp .otp-row input'));
+  otpInputs.forEach((input, i) => {
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/\D/g,'');
+      if (input.value && i < otpInputs.length - 1) otpInputs[i+1].focus();
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !input.value && i > 0) otpInputs[i-1].focus();
+    });
+  });
+
+  const btnVerifyOtp = document.getElementById('btn-verify-otp');
+  btnVerifyOtp.addEventListener('click', async () => {
+    const otp = otpInputs.map(i => i.value).join('');
+    if (otp.length !== 6) { showMsg('Enter the full 6-digit code.', 'error'); return; }
+
+    setLoading(btnVerifyOtp, true, 'Verify & continue');
+    try {
+      const result = await callApi({ action: 'verifyOtp', rollNo: state.rollNo, otp });
+      if (!result.ok) { showMsg(result.error || 'Incorrect code.', 'error'); return; }
+
+      await loadCandidates();
+      goToPanel('vote');
+    } catch (err) {
+      showMsg('Could not reach the server. Please try again.', 'error');
+    } finally {
+      setLoading(btnVerifyOtp, false, 'Verify & continue');
+    }
+  });
+
+  document.getElementById('btn-resend-otp').addEventListener('click', async () => {
+    clearMsg();
+    try {
+      const result = await callApi({ action: 'requestOtp', rollNo: state.rollNo, phone: state.phone, email: state.email });
+      showMsg(result.ok ? 'A new code has been sent.' : (result.error || 'Could not resend.'), result.ok ? 'success' : 'error');
+    } catch (err) {
+      showMsg('Could not reach the server.', 'error');
+    }
+  });
+
+  /* ---- Step 3: candidate selection + vote ---- */
+  async function loadCandidates(){
+    const list = document.getElementById('candidate-list');
+    list.innerHTML = '<p style="font-size:13px;color:var(--ink-faint);">Loading candidates…</p>';
+    try {
+      const result = await callApi({ action: 'getCandidates' });
+      const candidates = result.ok ? result.candidates : [];
+      list.innerHTML = '';
+      candidates.forEach(c => {
+        const el = document.createElement('div');
+        el.className = 'candidate';
+        el.dataset.id = c.id;
+        el.innerHTML = `
+          <div class="photo">${c.photoUrl ? `<img src="${c.photoUrl}" alt="${c.name}">` : c.name.charAt(0)}</div>
+          <div class="name">${c.name}</div>
+          <div class="mark"></div>
+        `;
+        el.addEventListener('click', () => {
+          document.querySelectorAll('.candidate').forEach(x => x.classList.remove('selected'));
+          el.classList.add('selected');
+          state.candidateId = c.id;
+          document.getElementById('btn-submit-vote').disabled = false;
+        });
+        list.appendChild(el);
+      });
+    } catch (err) {
+      list.innerHTML = '<p style="font-size:13px;color:var(--error);">Could not load candidates.</p>';
+    }
+  }
+
+  const btnSubmitVote = document.getElementById('btn-submit-vote');
+  btnSubmitVote.addEventListener('click', async () => {
+    if (!state.candidateId) return;
+    setLoading(btnSubmitVote, true, 'Seal & submit vote');
+    try {
+      const result = await callApi({ action: 'submitVote', rollNo: state.rollNo, candidateId: state.candidateId });
+      if (!result.ok) { showMsg(result.error || 'Could not submit your vote.', 'error'); setLoading(btnSubmitVote, false, 'Seal & submit vote'); return; }
+
+      document.getElementById('receipt').textContent =
+        `Roll No: ${state.rollNo}\nStatus: Recorded\nTimestamp: ${new Date().toLocaleString()}`;
+      goToPanel('done');
+    } catch (err) {
+      showMsg('Could not reach the server. Please try again.', 'error');
+      setLoading(btnSubmitVote, false, 'Seal & submit vote');
+    }
+  });
+</script>
+</body>
+</html>
