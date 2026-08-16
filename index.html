@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CR Election 2026 — Official Ballot</title>
+<title>CR Election 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.0"></script>
@@ -169,6 +169,21 @@
     font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-faint); text-align:left; white-space:pre-wrap;
   }
   .footer-note{ text-align:center; font-size:11px; color:var(--ink-faint); margin-top:18px; }
+  .credit-footer{
+    text-align:center; margin-top:26px; padding-top:16px;
+    border-top:1px solid var(--line);
+  }
+  .credit-footer .credit-line{
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .credit-footer .credit-line::before,
+  .credit-footer .credit-line::after{
+    content:''; width:22px; height:1px; background:var(--line);
+  }
+  .credit-footer span{
+    font-family:'Fraunces',serif; font-style:italic; font-weight:600; font-size:12.5px;
+    letter-spacing:0.03em; color:var(--seal);
+  }
 </style>
 </head>
 <body>
@@ -192,14 +207,13 @@
 
       <div id="msg" class="msg"></div>
 
-      <!-- Step 1: Login -->
       <div class="panel active" id="panel-login">
-        <p class="step-caption">Step I — Identify Yourself</p>
+        <p class="step-caption">Step 1. - Identify Yourself</p>
         <h2 class="step-title">Voter details</h2>
 
         <div class="field">
           <label for="voterQuery">Name or roll number</label>
-          <input id="voterQuery" placeholder="Start typing your name or roll no." autocomplete="off" />
+          <input id="voterQuery" placeholder="type your name or roll no." autocomplete="off" />
           <div id="suggestions" class="suggestions"></div>
           <div id="matchInfo" class="match-info"></div>
         </div>
@@ -212,9 +226,8 @@
         <button class="btn" id="btn-send-otp" disabled>Send OTP</button>
       </div>
 
-      <!-- Step 2: OTP -->
       <div class="panel" id="panel-otp">
-        <p class="step-caption">Step II — Verify</p>
+        <p class="step-caption">Step 2. - Verify</p>
         <h2 class="step-title">Enter the 6-digit code</h2>
         <p style="font-size:13px;color:var(--ink-soft);margin:-14px 0 18px;">
           Sent to <strong id="otp-target-email">—</strong>
@@ -235,7 +248,7 @@
 
       <!-- Step 3: Vote -->
       <div class="panel" id="panel-vote">
-        <p class="step-caption">Step III — Cast Your Votes</p>
+        <p class="step-caption">Step 3. - Cast Your Votes</p>
         <h2 class="step-title">Select one candidate in each section</h2>
 
         <div class="cr-section">
@@ -251,7 +264,6 @@
         <button class="btn btn-seal" id="btn-submit-vote" disabled>Seal &amp; submit votes</button>
       </div>
 
-      <!-- Confirmation -->
       <div class="panel" id="panel-done">
         <div class="sealed">
           <div class="seal-stamp">
@@ -266,18 +278,18 @@
     </div>
   </div>
 
-  <p class="footer-note">One vote per roll number, per section. Individual ballots are never visible to other students.</p>
+  <p class="footer-note"></p>
+  <div class="credit-footer"><p class="credit-line"><span>Designed &amp; Created by Aarsh Jain</span></p></div>
 </div>
 
 <script>
 (async function(){
   const { Client, Account, Databases, Functions, Query, ExecutionMethod, ID } = Appwrite;
 
-  // ---- Filled in from your Appwrite console ----
   const APPWRITE_ENDPOINT = 'https://nyc.cloud.appwrite.io/v1';
   const APPWRITE_PROJECT_ID = '6a814ea00015892ba475';
   const CAST_VOTE_FUNCTION_ID = '6a817ad10021721b576d';
-  // --------------------------------------------------
+  
 
   const DATABASE_ID = '6a8151d9002b3a0eadd3';
   const CANDIDATES_COLLECTION_ID = 'candidates';
@@ -287,9 +299,6 @@
   const databases = new Databases(client);
   const functions = new Functions(client);
 
-  // Roster shown for name/roll autocomplete only — NOT the security
-  // boundary. The cast-vote Function independently checks the real
-  // `voters` collection and the verified email before writing any vote.
   const STUDENTS = [
     {r:"2601CB01", n:"Shorya Sharma"}, {r:"2601CB02", n:"Aditi Kumari"}, {r:"2601CB03", n:"Animesh Kumar Jha"},
     {r:"2601CB04", n:"Rathod Ritesh"}, {r:"2601CB05", n:"Siriki Hemanth"}, {r:"2601CB06", n:"Anshul Tyagi"},
@@ -333,7 +342,6 @@
 
   function setLoading(btn, loading, label){ btn.disabled = loading; btn.textContent = loading ? 'Please wait…' : label; }
 
-  /* ---- Step 1: name/roll autodetect (UX only) + email auto-fill ---- */
   const voterQuery = document.getElementById('voterQuery');
   const suggestionsEl = document.getElementById('suggestions');
   const matchInfoEl = document.getElementById('matchInfo');
@@ -425,7 +433,6 @@
     }
   });
 
-  /* ---- Step 2: OTP entry ---- */
   const otpInputs = Array.from(document.querySelectorAll('#panel-otp .otp-row input'));
   otpInputs.forEach((input, i) => {
     input.addEventListener('input', () => {
@@ -463,7 +470,6 @@
     }
   });
 
-  /* ---- Step 3: candidate selection + vote ---- */
   function renderCandidateGroup(containerId, candidates, key, nameKey){
     const list = document.getElementById(containerId);
     if (!candidates || candidates.length === 0) {

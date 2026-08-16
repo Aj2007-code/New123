@@ -86,11 +86,25 @@
   .result-row.leading .rr-name::after{ content:' 👑'; }
   .total-votes{ font-size:12px; color:var(--ink-faint); margin-bottom:16px; }
   .logout{ float:right; }
+  .credit-footer{
+    text-align:center; margin-top:40px; padding-top:16px;
+    border-top:1px solid var(--line); clear:both;
+  }
+  .credit-footer .credit-line{
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .credit-footer .credit-line::before,
+  .credit-footer .credit-line::after{
+    content:''; width:22px; height:1px; background:var(--line);
+  }
+  .credit-footer span{
+    font-family:'Fraunces',serif; font-style:italic; font-weight:600; font-size:12.5px;
+    letter-spacing:0.03em; color:var(--seal);
+  }
 </style>
 </head>
 <body>
 
-<!-- Login -->
 <div class="center-wrap" id="loginView">
   <h1>CR Election — Admin</h1>
   <p class="sub">Sign in with an account that's a member of the <strong>admins</strong> team.</p>
@@ -116,9 +130,9 @@
       <button class="btn btn-full" id="btnAdminVerify">Verify &amp; sign in</button>
     </div>
   </div>
+  <div class="credit-footer"><p class="credit-line"><span>Designed &amp; Created by Aarsh Jain</span></p></div>
 </div>
 
-<!-- Dashboard -->
 <div class="wrap" id="dashView" style="display:none;">
   <button class="btn logout" id="btnLogout">Sign out</button>
   <h1>CR Election — Admin</h1>
@@ -145,7 +159,6 @@
     </div>
   </div>
 
-  <!-- Candidates -->
   <div class="view" id="view-candidates">
     <div class="card section-block">
       <div class="section-head"><h2>Boys' CR candidates</h2></div>
@@ -173,17 +186,17 @@
       </form>
     </div>
   </div>
+  <div class="credit-footer"><p class="credit-line"><span>Designed &amp; Created by Aarsh Jain</span></p></div>
 </div>
 
 <script>
 (async function(){
   const { Client, Account, Databases, Storage, Teams, Query, ID, Permission, Role } = Appwrite;
 
-  // ---- Filled in from your Appwrite console ----
   const APPWRITE_ENDPOINT = 'https://nyc.cloud.appwrite.io/v1';
   const APPWRITE_PROJECT_ID = '6a814ea00015892ba475';
   const ADMIN_TEAM_NAME = 'admins';
-  // --------------------------------------------------
+ 
 
   const DATABASE_ID = '6a8151d9002b3a0eadd3';
   const CANDIDATES_COLLECTION_ID = 'candidates';
@@ -259,7 +272,6 @@
     subscribeRealtime();
   }
 
-  // Tabs
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -269,7 +281,6 @@
     });
   });
 
-  /* ---- Candidates ---- */
   let candidatesCache = { boys: [], girls: [] };
 
   async function loadCandidates(){
@@ -341,7 +352,6 @@
   document.getElementById('formAddBoys').addEventListener('submit', (e) => { e.preventDefault(); addCandidate('boys', e.target); });
   document.getElementById('formAddGirls').addEventListener('submit', (e) => { e.preventDefault(); addCandidate('girls', e.target); });
 
-  /* ---- Live results ---- */
   async function loadResults(){
     try {
       const res = await databases.listDocuments(DATABASE_ID, VOTES_COLLECTION_ID, [Query.limit(5000)]);
@@ -390,7 +400,6 @@
     );
   }
 
-  // If a session already exists (page refresh), skip straight to the check.
   try {
     await account.get();
     await checkAdminAndEnter();
