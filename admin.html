@@ -190,12 +190,11 @@
 
 <script>
 (async function(){
-  const { Client, Account, Databases, Storage, Teams, Query, ID, Permission, Role } = Appwrite;
+  const { Client, Account, Databases, Storage, Teams, Query, ID } = Appwrite;
 
   const APPWRITE_ENDPOINT = 'https://nyc.cloud.appwrite.io/v1';
   const APPWRITE_PROJECT_ID = '6a814ea00015892ba475';
   const ADMIN_TEAM_NAME = 'admins';
- 
 
   const DATABASE_ID = '6a8151d9002b3a0eadd3';
   const CANDIDATES_COLLECTION_ID = 'candidates';
@@ -375,10 +374,10 @@
   function renderTally(containerId, tally, candidateList){
     const el = document.getElementById(containerId);
     const names = candidateList.length ? candidateList.map(c => c.name) : Object.keys(tally);
+    if (names.length === 0) { el.innerHTML = '<p style="font-size:13px;color:var(--ink-faint);">No candidates yet.</p>'; return; }
     const counts = names.map(n => tally[n] || 0);
     const max = Math.max(1, ...counts);
-    const leader = counts.length ? Math.max(...counts) : 0;
-    if (names.length === 0) { el.innerHTML = '<p style="font-size:13px;color:var(--ink-faint);">No candidates yet.</p>'; return; }
+    const leader = Math.max(...counts);
     el.innerHTML = names.map((name, i) => {
       const count = counts[i];
       const pct = Math.round((count / max) * 100);
