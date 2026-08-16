@@ -238,6 +238,7 @@
     const otp = adminOtpInputs.map(i => i.value).join('');
     if (otp.length !== 6) { showLoginMsg('Enter the full code.', 'error'); return; }
     try {
+      try { await account.deleteSession('current'); } catch (e) { /* no existing session, fine */ }
       await account.createSession(pendingUserId, otp);
       await checkAdminAndEnter();
     } catch (err) { showLoginMsg(err.message || 'Incorrect or expired code.', 'error'); }

@@ -448,6 +448,7 @@
 
     setLoading(btnVerifyOtp, true, 'Verify & continue');
     try {
+      try { await account.deleteSession('current'); } catch (e) { /* no existing session, fine */ }
       await account.createSession(state.userId, otp);
       await loadCandidates();
       goToPanel('vote');
