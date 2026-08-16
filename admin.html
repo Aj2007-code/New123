@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CR Election 2026 — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.0"></script>
+<style>
+  :root{
+    --paper: #F6F2E8; --paper-card: #FBF9F3; --ink: #1C2541; --ink-soft: #4A537A; --ink-faint: #8A8F9F;
+    --seal: #7A1F3D; --seal-bright: #9C2C4F; --line: #D9D2BE; --success: #2F5233; --error: #8A2E1F; --radius: 4px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(ellipse at top, #FBF9F3 0%, var(--paper) 60%);
+    color:var(--ink); font-family:'Inter',sans-serif; min-height:100vh; padding:32px 16px;
+  }
+  .wrap{ max-width:900px; margin:0 auto; }
+  .center-wrap{ max-width:440px; margin:80px auto; }
+  h1{ font-family:'Fraunces',serif; font-weight:600; font-size:28px; margin:0 0 4px; }
+  .sub{ color:var(--ink-soft); font-size:13.5px; margin:0 0 28px; }
+  .card{
+    background:var(--paper-card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:0 1px 2px rgba(28,37,65,0.04), 0 12px 28px -14px rgba(28,37,65,0.18); padding:26px;
+  }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12px; font-weight:600; color:var(--ink-soft); margin-bottom:6px; }
+  .field input, .field select{
+    width:100%; padding:11px 13px; border:1px solid var(--line); border-radius:var(--radius); background:#fff;
+    font-family:'IBM Plex Mono',monospace; font-size:14px; color:var(--ink);
+  }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--seal); }
+  .btn{
+    padding:11px 18px; border:none; border-radius:var(--radius); background:var(--ink); color:#fff;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:14px; cursor:pointer;
+  }
+  .btn:hover{ background:var(--ink-soft); }
+  .btn:disabled{ background:#C7CAD4; cursor:not-allowed; }
+  .btn-seal{ background:var(--seal); } .btn-seal:hover{ background:var(--seal-bright); }
+  .btn-danger{ background:var(--error); } .btn-danger:hover{ background:#a83a26; }
+  .btn-full{ width:100%; }
+  .msg{ font-size:13px; padding:10px 12px; border-radius:var(--radius); margin-bottom:16px; display:none; }
+  .msg.show{ display:block; }
+  .msg.error{ background:#F7E6E1; color:var(--error); }
+  .msg.success{ background:#E4EDE1; color:var(--success); }
+  .otp-row{ display:flex; gap:8px; margin-bottom:10px; }
+  .otp-row input{ width:40px; height:48px; text-align:center; font-size:20px; }
+  .tabs{ display:flex; gap:6px; margin-bottom:20px; }
+  .tab-btn{
+    padding:9px 16px; border:1px solid var(--line); background:#fff; border-radius:var(--radius);
+    font-size:13.5px; font-weight:600; color:var(--ink-soft); cursor:pointer;
+  }
+  .tab-btn.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .view{ display:none; } .view.active{ display:block; }
+  .section-block{ margin-bottom:30px; }
+  .section-head{
+    display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;
+  }
+  .section-head h2{ font-family:'Fraunces',serif; font-size:19px; margin:0; }
+  .cand-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+  .cand-card{
+    border:1.5px solid var(--line); border-radius:var(--radius); padding:12px; display:flex; flex-direction:column; gap:8px;
+    background:#fff;
+  }
+  .cand-card .photo{
+    width:100%; aspect-ratio:1; border-radius:var(--radius); background:linear-gradient(135deg,#E4DFCF,#D2CBB4);
+    display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-size:26px;
+    color:var(--ink-soft); overflow:hidden;
+  }
+  .cand-card .photo img{ width:100%; height:100%; object-fit:cover; }
+  .cand-card .cname{ font-weight:600; font-size:14px; }
+  .cand-card .croll{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-faint); }
+  .cand-card .cvotes{ font-size:12px; color:var(--seal); font-weight:600; }
+  .add-form{ border:1px dashed var(--line); border-radius:var(--radius); padding:14px; margin-top:12px; }
+  .add-form .row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .add-form .row > *{ flex:1; min-width:140px; }
+  .result-row{ margin-bottom:14px; }
+  .result-row .rr-top{ display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:4px; }
+  .result-row .rr-name{ font-weight:600; }
+  .result-row .rr-count{ font-family:'IBM Plex Mono',monospace; color:var(--ink-soft); }
+  .bar-track{ height:10px; border-radius:6px; background:var(--line); overflow:hidden; }
+  .bar-fill{ height:100%; background:var(--seal); border-radius:6px; transition:width .3s; }
+  .result-row.leading .rr-name::after{ content:' 👑'; }
+  .total-votes{ font-size:12px; color:var(--ink-faint); margin-bottom:16px; }
+  .logout{ float:right; }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div class="center-wrap" id="loginView">
+  <h1>CR Election — Admin</h1>
+  <p class="sub">Sign in with an account that's a member of the <strong>admins</strong> team.</p>
+  <div class="card">
+    <div id="loginMsg" class="msg"></div>
+
+    <div id="loginStep1">
+      <div class="field"><label>Email</label><input id="adminEmail" placeholder="you@iitp.ac.in" autocomplete="off" /></div>
+      <button class="btn btn-full" id="btnAdminSendOtp">Send OTP</button>
+    </div>
+
+    <div id="loginStep2" style="display:none;">
+      <div class="field"><label>6-digit code</label>
+        <div class="otp-row">
+          <input maxlength="1" inputmode="numeric" />
+          <input maxlength="1" inputmode="numeric" />
+          <input maxlength="1" inputmode="numeric" />
+          <input maxlength="1" inputmode="numeric" />
+          <input maxlength="1" inputmode="numeric" />
+          <input maxlength="1" inputmode="numeric" />
+        </div>
+      </div>
+      <button class="btn btn-full" id="btnAdminVerify">Verify &amp; sign in</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div class="wrap" id="dashView" style="display:none;">
+  <button class="btn logout" id="btnLogout">Sign out</button>
+  <h1>CR Election — Admin</h1>
+  <p class="sub" id="whoami"></p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-view="results">Live results</button>
+    <button class="tab-btn" data-view="candidates">Manage candidates</button>
+  </div>
+
+  <div id="msg" class="msg"></div>
+
+  <!-- Results -->
+  <div class="view active" id="view-results">
+    <div class="card section-block">
+      <h2 style="font-family:'Fraunces',serif;margin:0 0 4px;">Boys' CR</h2>
+      <p class="total-votes" id="boysTotalVotes">0 votes cast</p>
+      <div id="boysResults"></div>
+    </div>
+    <div class="card section-block">
+      <h2 style="font-family:'Fraunces',serif;margin:0 0 4px;">Girls' CR</h2>
+      <p class="total-votes" id="girlsTotalVotes">0 votes cast</p>
+      <div id="girlsResults"></div>
+    </div>
+  </div>
+
+  <!-- Candidates -->
+  <div class="view" id="view-candidates">
+    <div class="card section-block">
+      <div class="section-head"><h2>Boys' CR candidates</h2></div>
+      <div class="cand-grid" id="boysCandGrid"></div>
+      <form class="add-form" id="formAddBoys">
+        <div class="row">
+          <input placeholder="Candidate name" required data-f="name" />
+          <input placeholder="Roll number" required data-f="rollNo" />
+          <input type="file" accept="image/*" data-f="photo" />
+        </div>
+        <button class="btn btn-seal" style="margin-top:10px;" type="submit">+ Add Boys' CR candidate</button>
+      </form>
+    </div>
+
+    <div class="card section-block">
+      <div class="section-head"><h2>Girls' CR candidates</h2></div>
+      <div class="cand-grid" id="girlsCandGrid"></div>
+      <form class="add-form" id="formAddGirls">
+        <div class="row">
+          <input placeholder="Candidate name" required data-f="name" />
+          <input placeholder="Roll number" required data-f="rollNo" />
+          <input type="file" accept="image/*" data-f="photo" />
+        </div>
+        <button class="btn btn-seal" style="margin-top:10px;" type="submit">+ Add Girls' CR candidate</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(async function(){
+  const { Client, Account, Databases, Storage, Teams, Query, ID, Permission, Role } = Appwrite;
+
+  // ---- Filled in from your Appwrite console ----
+  const APPWRITE_ENDPOINT = 'https://nyc.cloud.appwrite.io/v1';
+  const APPWRITE_PROJECT_ID = '6a814ea00015892ba475';
+  const ADMIN_TEAM_NAME = 'admins';
+  // --------------------------------------------------
+
+  const DATABASE_ID = '6a8151d9002b3a0eadd3';
+  const CANDIDATES_COLLECTION_ID = 'candidates';
+  const VOTES_COLLECTION_ID = 'votes';
+  const PHOTOS_BUCKET_ID = 'candidate-photos';
+
+  const client = new Client().setEndpoint(APPWRITE_ENDPOINT).setProject(APPWRITE_PROJECT_ID);
+  const account = new Account(client);
+  const databases = new Databases(client);
+  const storage = new Storage(client);
+  const teams = new Teams(client);
+
+  let pendingUserId = '';
+
+  const loginMsgEl = document.getElementById('loginMsg');
+  function showLoginMsg(t, type){ loginMsgEl.textContent = t; loginMsgEl.className = 'msg show ' + type; }
+  const msgEl = document.getElementById('msg');
+  function showMsg(t, type){ msgEl.textContent = t; msgEl.className = 'msg show ' + type; setTimeout(()=>msgEl.className='msg', 4000); }
+
+  document.getElementById('btnAdminSendOtp').addEventListener('click', async () => {
+    const email = document.getElementById('adminEmail').value.trim();
+    if (!email) { showLoginMsg('Enter your email.', 'error'); return; }
+    try {
+      const token = await account.createEmailToken({ userId: ID.unique(), email });
+      pendingUserId = token.userId;
+      document.getElementById('loginStep1').style.display = 'none';
+      document.getElementById('loginStep2').style.display = 'block';
+      document.querySelector('#loginStep2 input').focus();
+    } catch (err) { showLoginMsg(err.message || 'Could not send OTP.', 'error'); }
+  });
+
+  const adminOtpInputs = Array.from(document.querySelectorAll('#loginStep2 .otp-row input'));
+  adminOtpInputs.forEach((input, i) => {
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/\D/g,'');
+      if (input.value && i < adminOtpInputs.length - 1) adminOtpInputs[i+1].focus();
+    });
+  });
+
+  document.getElementById('btnAdminVerify').addEventListener('click', async () => {
+    const otp = adminOtpInputs.map(i => i.value).join('');
+    if (otp.length !== 6) { showLoginMsg('Enter the full code.', 'error'); return; }
+    try {
+      await account.createSession({ userId: pendingUserId, secret: otp });
+      await checkAdminAndEnter();
+    } catch (err) { showLoginMsg(err.message || 'Incorrect or expired code.', 'error'); }
+  });
+
+  document.getElementById('btnLogout').addEventListener('click', async () => {
+    try { await account.deleteSession('current'); } catch (e) {}
+    location.reload();
+  });
+
+  async function checkAdminAndEnter(){
+    let isAdmin = false, userEmail = '';
+    try {
+      const me = await account.get();
+      userEmail = me.email;
+      const memberships = await teams.list();
+      isAdmin = memberships.teams.some(t => t.name === ADMIN_TEAM_NAME);
+    } catch (err) { /* not logged in or listing failed */ }
+
+    if (!isAdmin) {
+      showLoginMsg("Signed in, but this account isn't a member of the admins team.", 'error');
+      try { await account.deleteSession('current'); } catch (e) {}
+      return;
+    }
+
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('dashView').style.display = 'block';
+    document.getElementById('whoami').textContent = `Signed in as ${userEmail}`;
+    await Promise.all([loadCandidates(), loadResults()]);
+    subscribeRealtime();
+  }
+
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    });
+  });
+
+  /* ---- Candidates ---- */
+  let candidatesCache = { boys: [], girls: [] };
+
+  async function loadCandidates(){
+    const [boysRes, girlsRes] = await Promise.all([
+      databases.listDocuments(DATABASE_ID, CANDIDATES_COLLECTION_ID, [Query.equal('section', 'boys')]),
+      databases.listDocuments(DATABASE_ID, CANDIDATES_COLLECTION_ID, [Query.equal('section', 'girls')]),
+    ]);
+    candidatesCache.boys = boysRes.documents;
+    candidatesCache.girls = girlsRes.documents;
+    renderCandGrid('boysCandGrid', candidatesCache.boys);
+    renderCandGrid('girlsCandGrid', candidatesCache.girls);
+  }
+
+  function renderCandGrid(containerId, list){
+    const el = document.getElementById(containerId);
+    if (list.length === 0) { el.innerHTML = '<p style="font-size:13px;color:var(--ink-faint);">No candidates yet.</p>'; return; }
+    el.innerHTML = list.map(c => `
+      <div class="cand-card">
+        <div class="photo">${c.photoUrl ? `<img src="${c.photoUrl}" alt="${c.name}">` : c.name.charAt(0)}</div>
+        <div class="cname">${c.name}</div>
+        <div class="croll">${c.rollNo}</div>
+        <button class="btn btn-danger" data-del="${c.$id}" data-photo="${c.photoFileId || ''}">Delete</button>
+      </div>
+    `).join('');
+    el.querySelectorAll('[data-del]').forEach(btn => {
+      btn.addEventListener('click', () => deleteCandidate(btn.dataset.del, btn.dataset.photo));
+    });
+  }
+
+  async function deleteCandidate(id, photoFileId){
+    if (!confirm('Remove this candidate? This cannot be undone.')) return;
+    try {
+      await databases.deleteDocument(DATABASE_ID, CANDIDATES_COLLECTION_ID, id);
+      if (photoFileId) { try { await storage.deleteFile(PHOTOS_BUCKET_ID, photoFileId); } catch (e) {} }
+      showMsg('Candidate removed.', 'success');
+      await loadCandidates();
+    } catch (err) { showMsg(err.message || 'Could not delete candidate.', 'error'); }
+  }
+
+  async function addCandidate(section, form){
+    const name = form.querySelector('[data-f="name"]').value.trim();
+    const rollNo = form.querySelector('[data-f="rollNo"]').value.trim().toUpperCase();
+    const photoInput = form.querySelector('[data-f="photo"]');
+    const file = photoInput.files[0];
+    if (!name || !rollNo) { showMsg('Name and roll number are required.', 'error'); return; }
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true; submitBtn.textContent = 'Adding…';
+    try {
+      let photoFileId = '', photoUrl = '';
+      if (file) {
+        const uploaded = await storage.createFile(PHOTOS_BUCKET_ID, ID.unique(), file);
+        photoFileId = uploaded.$id;
+        photoUrl = storage.getFileView(PHOTOS_BUCKET_ID, uploaded.$id);
+      }
+      await databases.createDocument(DATABASE_ID, CANDIDATES_COLLECTION_ID, ID.unique(), {
+        name, rollNo, section, photoFileId, photoUrl
+      });
+      form.reset();
+      showMsg('Candidate added.', 'success');
+      await loadCandidates();
+    } catch (err) {
+      showMsg(err.message || 'Could not add candidate.', 'error');
+    } finally {
+      submitBtn.disabled = false; submitBtn.textContent = `+ Add ${section === 'boys' ? "Boys'" : "Girls'"} CR candidate`;
+    }
+  }
+
+  document.getElementById('formAddBoys').addEventListener('submit', (e) => { e.preventDefault(); addCandidate('boys', e.target); });
+  document.getElementById('formAddGirls').addEventListener('submit', (e) => { e.preventDefault(); addCandidate('girls', e.target); });
+
+  /* ---- Live results ---- */
+  async function loadResults(){
+    try {
+      const res = await databases.listDocuments(DATABASE_ID, VOTES_COLLECTION_ID, [Query.limit(5000)]);
+      renderResults(res.documents);
+    } catch (err) {
+      showMsg(err.message || 'Could not load results.', 'error');
+    }
+  }
+
+  function renderResults(votes){
+    const boysTally = {}, girlsTally = {};
+    votes.forEach(v => {
+      boysTally[v.boysCandidateName] = (boysTally[v.boysCandidateName] || 0) + 1;
+      girlsTally[v.girlsCandidateName] = (girlsTally[v.girlsCandidateName] || 0) + 1;
+    });
+    document.getElementById('boysTotalVotes').textContent = `${votes.length} votes cast`;
+    document.getElementById('girlsTotalVotes').textContent = `${votes.length} votes cast`;
+    renderTally('boysResults', boysTally, candidatesCache.boys);
+    renderTally('girlsResults', girlsTally, candidatesCache.girls);
+  }
+
+  function renderTally(containerId, tally, candidateList){
+    const el = document.getElementById(containerId);
+    const names = candidateList.length ? candidateList.map(c => c.name) : Object.keys(tally);
+    const counts = names.map(n => tally[n] || 0);
+    const max = Math.max(1, ...counts);
+    const leader = counts.length ? Math.max(...counts) : 0;
+    if (names.length === 0) { el.innerHTML = '<p style="font-size:13px;color:var(--ink-faint);">No candidates yet.</p>'; return; }
+    el.innerHTML = names.map((name, i) => {
+      const count = counts[i];
+      const pct = Math.round((count / max) * 100);
+      const isLeading = count > 0 && count === leader;
+      return `
+        <div class="result-row ${isLeading ? 'leading' : ''}">
+          <div class="rr-top"><span class="rr-name">${name}</span><span class="rr-count">${count}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function subscribeRealtime(){
+    client.subscribe(
+      `databases.${DATABASE_ID}.collections.${VOTES_COLLECTION_ID}.documents`,
+      () => { loadResults(); }
+    );
+  }
+
+  // If a session already exists (page refresh), skip straight to the check.
+  try {
+    await account.get();
+    await checkAdminAndEnter();
+  } catch (e) { /* not logged in yet — show login form */ }
+})();
+</script>
+</body>
+</html>
