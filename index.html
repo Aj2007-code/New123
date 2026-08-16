@@ -412,7 +412,7 @@
 
     setLoading(btnSendOtp, true, 'Send OTP');
     try {
-      const token = await account.createEmailToken({ userId: ID.unique(), email });
+      const token = await account.createEmailToken(ID.unique(), email);
       state.userId = token.userId;
       document.getElementById('otp-target-email').textContent = email;
       goToPanel('otp');
@@ -442,7 +442,7 @@
 
     setLoading(btnVerifyOtp, true, 'Verify & continue');
     try {
-      await account.createSession({ userId: state.userId, secret: otp });
+      await account.createSession(state.userId, otp);
       await loadCandidates();
       goToPanel('vote');
     } catch (err) {
@@ -455,7 +455,7 @@
   document.getElementById('btn-resend-otp').addEventListener('click', async () => {
     clearMsg();
     try {
-      const token = await account.createEmailToken({ userId: ID.unique(), email: emailEl.value.trim() });
+      const token = await account.createEmailToken(ID.unique(), emailEl.value.trim());
       state.userId = token.userId;
       showMsg('A new code has been sent.', 'success');
     } catch (err) {

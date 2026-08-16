@@ -207,7 +207,7 @@
     const email = document.getElementById('adminEmail').value.trim();
     if (!email) { showLoginMsg('Enter your email.', 'error'); return; }
     try {
-      const token = await account.createEmailToken({ userId: ID.unique(), email });
+      const token = await account.createEmailToken(ID.unique(), email);
       pendingUserId = token.userId;
       document.getElementById('loginStep1').style.display = 'none';
       document.getElementById('loginStep2').style.display = 'block';
@@ -227,7 +227,7 @@
     const otp = adminOtpInputs.map(i => i.value).join('');
     if (otp.length !== 6) { showLoginMsg('Enter the full code.', 'error'); return; }
     try {
-      await account.createSession({ userId: pendingUserId, secret: otp });
+      await account.createSession(pendingUserId, otp);
       await checkAdminAndEnter();
     } catch (err) { showLoginMsg(err.message || 'Incorrect or expired code.', 'error'); }
   });
